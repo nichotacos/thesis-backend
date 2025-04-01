@@ -1,4 +1,5 @@
 import User from "../models/Users.js";
+import bcrypt from "bcrypt";
 
 export async function fetchUsers(req, res) {
     try {
@@ -14,5 +15,30 @@ export async function fetchUsers(req, res) {
         });
     } catch (error) {
         res.status(500).json({ message: "Error fetching users", error });
+    }
+}
+
+export async function storeUser(req, res) {
+    try {
+        console.log("Request body:", req.body);
+        const { username, userFullName, email, password } = req.body;
+
+        if (!username || !userFullName || !email) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({
+            username,
+            userFullName,
+            email,
+            hashedPassword,
+        });
+
+        await newUser.save();
+        res.status(201).json({ message: "User created successfully", user: newUser });
+    } catch (error) {
+        res.status(500).json({ message: "Error storing user", error });
     }
 }

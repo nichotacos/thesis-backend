@@ -26,4 +26,4 @@ app.listen(PORT, () => {
     console.log(`MongoDB URI: ${process.env.MONGO_URI}`);
 })
 
-app.use("/api", userRoutes);
+app.use("/api/v1", userRoutes);
