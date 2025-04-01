@@ -27,6 +27,20 @@ export async function storeUser(req, res) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
+        const existingEmail = await User.findOne({ email });
+        if (existingEmail) {
+            return res.status(400).json({ message: "Email already exists" });
+        }
+
+        const existingUsername = await User.findOne({ username });
+        if (existingUsername) {
+            return res.status(400).json({ message: "Username already exists" });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters long" });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({
