@@ -2,6 +2,9 @@ import { configDotenv } from "dotenv";
 import express, { json } from "express";
 import mongoose from "mongoose";
 
+// Import routes
+import userRoutes from "./routes/UserRoute.js";
+
 configDotenv({
     path: "./.env.local",
 })
@@ -22,3 +25,5 @@ app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log(`MongoDB URI: ${process.env.MONGO_URI}`);
 })
+
+app.use("/api", userRoutes);
