@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 
 // Import routes
 import userRoutes from "./routes/UserRoute.js";
+import authRoutes from "./routes/authRoute.js";
 
 configDotenv({
     path: "./.env.local",
@@ -27,3 +28,4 @@ app.listen(PORT, () => {
 })
 
 app.use("/api/v1", userRoutes);
+app.use("/api/v1/auth", authRoutes);

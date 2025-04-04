@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import User from '../models/Users';
+import User from '../models/Users.js';
 import jwt from 'jsonwebtoken';
 import RefreshToken from '../models/RefreshToken.js';
 
@@ -90,6 +90,29 @@ export async function refreshAccessToken(req, res) {
         res.status(200).json({
             accessToken: newAccessToken,
             message: 'Access token refreshed successfully!',
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Internal server error!',
+            error: error.message,
+        });
+    }
+}
+
+export async function logout(req, res) {
+    const { refreshToken } = req.body;
+
+    try {
+        if (!refreshToken) {
+            return res.status(400).json({
+                message: 'Refresh token is required!',
+            });
+        }
+
+        await RefreshToken.findOneAndDelete({ token: refreshToken });
+
+        res.status(200).json({
+            message: 'Logged out successfully!',
         });
     } catch (error) {
         return res.status(500).json({
