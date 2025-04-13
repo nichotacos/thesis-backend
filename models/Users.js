@@ -51,6 +51,16 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    currentLevel: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Level",
+        default: null,
+    },
+    currentModule: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Module",
+        default: null,
+    },
 }, { timestamps: true });
 
 const User = mongoose.model("User", UserSchema);
