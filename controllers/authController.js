@@ -23,23 +23,23 @@ export async function login(req, res) {
     try {
         const { username, password } = req.body;
 
-        if (!username || !password) {
+        if (username === '' || password === '') {
             return res.status(400).json({
-                message: 'Username and password are required!',
+                message: 'Masukkan Username dan Password!',
             });
         }
 
         const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({
-                message: 'User not found!',
+                message: 'Pengguna tidak ditemukan!',
             });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.hashedPassword);
         if (!isPasswordValid) {
             return res.status(401).json({
-                message: 'Invalid credentials!',
+                message: 'Username atau kata sandi salah!',
             });
         }
 
@@ -57,6 +57,7 @@ export async function login(req, res) {
         res.status(200).json({
             accessToken,
             refreshToken,
+            user,
             message: 'Login successful!',
         })
     } catch (error) {
