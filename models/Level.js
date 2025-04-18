@@ -9,11 +9,6 @@ const levelSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    modules: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Module",
-        required: true,
-    }],
 }, { timestamps: true });
 
 const Level = mongoose.model("Level", levelSchema);
