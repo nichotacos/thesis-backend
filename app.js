@@ -30,4 +30,4 @@ app.listen(PORT, () => {
 
 app.use("/api/v1", userRoutes);
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/level", levelRoutes);
+app.use("/api/v1/", levelRoutes);

@@ -17,14 +17,15 @@ export async function getLevels(req, res) {
 
 export async function createLevel(req, res) {
     try {
-        const { name, description } = req.body;
+        const { name, actualBipaLevel, description } = req.body;
 
-        if (!name || !description) {
+        if (!name || !actualBipaLevel || !description) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
         const newLevel = new Level({
             name,
+            actualBipaLevel,
             description,
         });
 
