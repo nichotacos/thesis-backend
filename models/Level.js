@@ -13,6 +13,10 @@ const levelSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    // modules: [{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Module",
+    // }],
 }, { timestamps: true });
 
 const Level = mongoose.model("Level", levelSchema);

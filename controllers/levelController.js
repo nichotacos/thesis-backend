@@ -2,7 +2,16 @@ import Level from "../models/Level.js";
 
 export async function getLevels(req, res) {
     try {
-        const levels = await Level.find().populate('modules');
+        const levels = await Level.aggregate([
+            {
+                $lookup: {
+                    from: 'modules',
+                    localField: '_id',
+                    foreignField: 'level',
+                    as: 'modules'
+                }
+            }
+        ])
         if (!levels) {
             return res.status(404).json({ message: "No levels found" });
         }
@@ -17,22 +26,27 @@ export async function getLevels(req, res) {
 
 export async function createLevel(req, res) {
     try {
-        const { name, actualBipaLevel, description } = req.body;
+        const { levels } = req.body;
 
-        if (!name || !actualBipaLevel || !description) {
-            return res.status(400).json({ message: "All fields are required" });
+        if (!levels || levels.length === 0) {
+            return res.status(400).json({ message: 'Please provide an array of levels.' });
         }
 
-        const newLevel = new Level({
-            name,
-            actualBipaLevel,
-            description,
-        });
+        const invalidLevels = levels.filter((l) =>
+            !l.name || !l.name.trim() ||
+            !l.actualBipaLevel || !l.actualBipaLevel.trim() ||
+            !l.description || !l.description.trim()
+        );
 
-        await newLevel.save();
+        if (invalidLevels.length > 0) {
+            return res.status(400).json({ message: 'Please fill all fields!' });
+        }
+
+        const createdLevels = await Level.insertMany(levels);
+
         res.status(201).json({
-            level: newLevel,
-            message: "Level created successfully",
+            message: 'Levels created successfully',
+            data: createdLevels
         });
     } catch (error) {
         res.status(500).json({ message: "Error creating level", error });
