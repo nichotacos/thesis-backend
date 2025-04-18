@@ -13,11 +13,6 @@ const moduleSchema = new mongoose.Schema({
         ref: "Level",
         required: true,
     },
-    questions: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Question",
-        required: true,
-    }]
 });
 
 const Module = mongoose.model("Module", moduleSchema);
