@@ -7,7 +7,6 @@ const moduleSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: true,
     },
     level: {
         type: mongoose.Schema.Types.ObjectId,
