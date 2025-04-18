@@ -31,6 +31,7 @@ const questionSchema = new mongoose.Schema({
         },
     },
     options: [{
+        _id: false,
         optionText: {
             type: String,
             required: true,
@@ -41,7 +42,7 @@ const questionSchema = new mongoose.Schema({
         },
     }],
     answer: {
-        type: String,
+        type: mongoose.Schema.Types.Mixed,
         required: true,
     },
     explanation: {
