@@ -1,4 +1,4 @@
-import Level from "../models/Level";
+import Level from "../models/Level.js";
 
 export async function getLevels(req, res) {
     try {
