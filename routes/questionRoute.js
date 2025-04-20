@@ -3,7 +3,7 @@ import { createQuestions, getQuestions } from '../controllers/questionController
 
 const router = express.Router();
 
-router.get('/question', getQuestions);
-router.post('/question', createQuestions);
+router.post('/question', getQuestions);
+router.post('/question/create', createQuestions);
 
 export default router;

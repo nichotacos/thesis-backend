@@ -3,7 +3,7 @@ import { createModule, getModules } from '../controllers/moduleController.js';
 
 const router = express.Router();
 
-router.get('/module', getModules);
-router.post('/module', createModule);
+router.post('/module', getModules);
+router.post('/module/create', createModule);
 
 export default router;
