@@ -6,19 +6,36 @@ export async function getQuestions(req, res) {
     try {
         const { levelIds, moduleIds } = req.body;
 
-        if ((!levelIds || !Array.isArray(levelIds) || levelIds.length === 0) && (!moduleIds || !Array.isArray(moduleIds) || moduleIds.length === 0)) {
+        if (
+            (!levelIds || !Array.isArray(levelIds) || levelIds.length === 0) &&
+            (!moduleIds || !Array.isArray(moduleIds) || moduleIds.length === 0)
+        ) {
             return res.status(400).json({ message: 'Please provide an array of level IDs or module IDs.' });
         }
 
-        const questions = await Question.find({ level: { $in: levelIds }, module: { $in: moduleIds } }).populate('level').populate('module').lean();
+        // Build dynamic query
+        const query = {};
+        if (levelIds && Array.isArray(levelIds) && levelIds.length > 0) {
+            query.level = { $in: levelIds };
+        }
+        if (moduleIds && Array.isArray(moduleIds) && moduleIds.length > 0) {
+            query.module = { $in: moduleIds };
+        }
+
+        const questions = await Question.find(query)
+            .populate('level', 'name')  // populate only 'name' if you want to limit fields
+            .populate('module', 'name') // same here
+            .lean();
+
         res.status(200).json({
             message: 'Questions fetched successfully',
             data: questions
         });
     } catch (error) {
-        res.status(500).json({ message: "Error fetching questions", erorr: error.message });
+        res.status(500).json({ message: "Error fetching questions", error: error.message });
     }
 }
+
 
 export async function createQuestions(req, res) {
     try {
