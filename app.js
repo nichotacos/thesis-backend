@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoute.js";
 import levelRoutes from "./routes/levelRoute.js";
 import moduleRoutes from "./routes/moduleRoute.js";
 import questionRoutes from "./routes/questionRoute.js";
+import startCrons from "./crons/index.js";
 
 configDotenv({
     path: "./.env.local",
@@ -19,6 +20,8 @@ app.use(json());
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log("MongoDB connected successfully");
+
+        startCrons();
     })
     .catch((err) => {
         console.error("MongoDB connection error:", err);
