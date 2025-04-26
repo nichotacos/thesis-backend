@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Level from "./Level.js";
 
 const UserSchema = new mongoose.Schema({
     username: {
@@ -52,6 +53,10 @@ const UserSchema = new mongoose.Schema({
         default: null,
     },
     currentLevel: {
+        type: Number,
+        default: 1,
+    },
+    currentLearnLevel: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Level",
         default: null,
