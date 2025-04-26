@@ -1,6 +1,8 @@
 import User from "../models/Users.js";
 import bcrypt from "bcrypt";
 import { verifyCaptcha } from "../utils/verifyCaptcha.js";
+import Level from "../models/Level.js";
+import Module from "../models/Module.js";
 
 export async function fetchUsers(req, res) {
     try {
@@ -22,7 +24,7 @@ export async function fetchUsers(req, res) {
 export async function storeUser(req, res) {
     try {
         console.log("Request body:", req.body);
-        const { username, userFullName, email, password } = req.body;
+        const { username, userFullName, email, password, captchaToken } = req.body;
 
         if (!username || !userFullName || !email) {
             return res.status(400).json({ message: "All fields are required" });
@@ -42,23 +44,29 @@ export async function storeUser(req, res) {
             return res.status(400).json({ message: "Password must be at least 6 characters long" });
         }
 
-        const isHuman = await verifyCaptcha(req.body.captchaToken);
+        // const isHuman = await verifyCaptcha(captchaToken);
 
-        if (!isHuman) {
-            return res.status(400).json({ message: "Verifikasi Captcha gagal!" });
-        }
+        // if (!isHuman) {
+        //     return res.status(400).json({ message: "Verifikasi Captcha gagal!" });
+        // }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
+        const firstLevel = await Level.findOne({ name: "Bali" });
+        const firstModule = await Module.findOne({ level: firstLevel._id, index: 1 });
+        const userFirstName = userFullName.split(" ")[0];
+        const profilePicture = `https://ui-avatars.com/api/?name=${userFirstName}&background=A60000&color=fff`;
 
         const newUser = new User({
             username,
             userFullName,
             email,
             hashedPassword,
+            currentLearnLevel: firstLevel._id,
+            currentModule: firstModule._id,
+            profilePicture,
         });
 
-        // await newUser.save();
+        await newUser.save();
         res.status(201).json({ message: "User created successfully", user: newUser });
     } catch (error) {
         res.status(500).json({ message: "Error storing user", error });
