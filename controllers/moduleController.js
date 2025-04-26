@@ -40,29 +40,46 @@ export async function createModule(req, res) {
         }
 
         const levelIds = modules.map(m => m.level);
-        const levels = await Level.find({ _id: { $in: levelIds } }).lean();
-        console.log('levls', levels)
+        const uniqueLevelIds = [...new Set(levelIds)];
 
+        // Fetch levels
+        const levels = await Level.find({ _id: { $in: uniqueLevelIds } }).lean();
         const levelMap = new Map(levels.map(level => [level._id.toString(), level]));
 
-        const invalidModulesWithLevel = modules.filter((m) => {
-            if (!levelMap.has(m.level.toString())) {
-                return true;
-            }
-            return false;
-        });
-
+        const invalidModulesWithLevel = modules.filter((m) => !levelMap.has(m.level.toString()));
         if (invalidModulesWithLevel.length > 0) {
             return res.status(400).json({ message: 'Some levels do not exist.' });
         }
 
-        const createdModules = await Module.insertMany(modules);
+        // Step 1: Get current highest index for each level
+        const latestIndexes = {};
+        for (const levelId of uniqueLevelIds) {
+            const latestModule = await Module.findOne({ level: levelId })
+                .sort({ index: -1 }) // Get the one with highest index
+                .lean();
+
+            latestIndexes[levelId] = latestModule ? latestModule.index : 0;
+        }
+
+        // Step 2: Assign indexes
+        const modulesWithIndex = modules.map((m) => {
+            const currentLastIndex = latestIndexes[m.level] || 0;
+            latestIndexes[m.level] = currentLastIndex + 1; // Update the latest index for this level
+            return {
+                ...m,
+                index: latestIndexes[m.level],
+            };
+        });
+
+        // Step 3: Create modules
+        const createdModules = await Module.insertMany(modulesWithIndex);
 
         res.status(201).json({
             message: 'Modules created successfully',
             data: createdModules
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Error creating modules', error: error.message });
     }
 }
