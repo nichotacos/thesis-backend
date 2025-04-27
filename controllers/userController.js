@@ -100,7 +100,7 @@ export async function addUserExp(req, res) {
 }
 
 export async function getWeeklyLeaderboard(req, res) {
-    const { userId } = req.body;
+    const { userId } = req.query;
     if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
     }
@@ -125,7 +125,7 @@ export async function getWeeklyLeaderboard(req, res) {
         res.status(200).json({
             users,
             currentUser: {
-                currentUser: users[currentUserIndex],
+                currentUserData: users[currentUserIndex],
                 rank: userRank,
             },
             message: "Weekly leaderboard fetched successfully",
