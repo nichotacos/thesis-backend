@@ -72,3 +72,29 @@ export async function storeUser(req, res) {
         res.status(500).json({ message: "Error storing user", error });
     }
 }
+
+export async function addUserExp(req, res) {
+    const { userId, exp } = req.body;
+
+    if (!userId || typeof exp !== "number") {
+        return res.status(400).json({ message: "Invalid input" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.dailyExp += exp;
+        user.weeklyExp += exp;
+        user.totalExp += exp;
+
+        await user.save();
+
+        return res.status(200).json({ message: "Experience points added successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: "Error adding experience points", error });
+
+    }
+}
