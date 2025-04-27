@@ -98,3 +98,39 @@ export async function addUserExp(req, res) {
 
     }
 }
+
+export async function getWeeklyLeaderboard(req, res) {
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+
+    try {
+        const users = await User.find()
+            .sort({ weeklyExp: -1 })
+            .limit(10)
+            .lean();
+
+        if (!users) {
+            return res.status(404).json({ message: "No users found" });
+        }
+
+        const currentUserIndex = users.findIndex(user => user._id.toString() === userId);
+        const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : 0;
+
+        if (userRank === 0) {
+            return res.status(404).json({ message: "User not found in leaderboard" });
+        }
+
+        res.status(200).json({
+            users,
+            currentUser: {
+                currentUser: users[currentUserIndex],
+                rank: userRank,
+            },
+            message: "Weekly leaderboard fetched successfully",
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching weekly leaderboard", error });
+    }
+}
