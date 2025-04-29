@@ -66,6 +66,13 @@ const UserSchema = new mongoose.Schema({
         ref: "Module",
         default: null,
     },
+    hearts: {
+        current: {
+            type: Number,
+            default: 5,
+        },
+        lostAt: [Date],
+    }
 }, { timestamps: true });
 
 const User = mongoose.model("User", UserSchema);
