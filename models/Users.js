@@ -71,7 +71,10 @@ const UserSchema = new mongoose.Schema({
             type: Number,
             default: 5,
         },
-        lostAt: [Date],
+        lostAt: {
+            type: [Date],
+            default: [],
+        }
     }
 }, { timestamps: true });
 
