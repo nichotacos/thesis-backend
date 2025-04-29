@@ -284,14 +284,79 @@ export async function completeModule(req, res) {
 
         console.log("Completed Modules:", user.completedModules);
 
+        user.isAbleToClaimDailyReward = true;
+
         await user.save();
-        console.log("User after completing module:");
         await updateStreak(user);
-        console.log("User after updating streak:");
         await addUserExpWithoutReqRes(userId, correctCount * 5);
-        console.log("User after adding exp:");
+
         res.status(200).json({ message: "Module completed successfully", user });
     } catch (error) {
         res.status(500).json({ message: "Error completing module", error });
+    }
+}
+
+export async function addGems(req, res) {
+    const { userId, gemsAmount } = req.body;
+
+    if (!userId || typeof gemsAmount !== "number") {
+        return res.status(400).json({ message: "Invalid input" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.totalGems += gemsAmount;
+        await user.save();
+
+        return res.status(200).json({ message: "Gems added successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: "Error adding gems", error });
+    }
+}
+
+export async function claimDailyReward(req, res) {
+    const { userId, gems } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+
+    if (gems && typeof gems !== "number") {
+        return res.status(400).json({ message: "Invalid gems amount" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.hasClaimedDailyReward) {
+            return res.status(400).json({ message: "Daily reward already claimed" });
+        }
+
+        if (!user.isAbleToClaimDailyReward) {
+            return res.status(400).json({ message: "Not eligible to claim daily reward" });
+        }
+
+        const now = new Date();
+
+        user.lastDailyRewardClaim = now;
+        user.hasClaimedDailyReward = true;
+        user.totalGems += gems || 0;
+        user.isAbleToClaimDailyReward = false;
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Daily reward claimed successfully",
+            user,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Error claiming daily reward", error });
     }
 }
