@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { verifyCaptcha } from "../utils/verifyCaptcha.js";
 import Level from "../models/Level.js";
 import Module from "../models/Module.js";
+import getDayDifference from "../utils/getDayDifference.js";
 
 export async function fetchUsers(req, res) {
     try {
@@ -99,6 +100,27 @@ export async function addUserExp(req, res) {
     }
 }
 
+async function addUserExpWithoutReqRes(userId, exp) {
+    if (!userId || typeof exp !== "number") {
+        return res.status(400).json({ message: "Invalid input" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.dailyExp += exp;
+        user.weeklyExp += exp;
+        user.totalExp += exp;
+
+        await user.save();
+    } catch (error) {
+        return res.status(500).json({ message: "Error adding experience points", error });
+    }
+}
+
 export async function getWeeklyLeaderboard(req, res) {
     const { userId } = req.query;
     if (!userId) {
@@ -131,7 +153,7 @@ export async function getWeeklyLeaderboard(req, res) {
             message: "Weekly leaderboard fetched successfully",
         });
     } catch (error) {
-        res.status(500).json({ message: "Error fetching weekly leaderboard", error });
+        console.error("Error fetching weekly leaderboard:", error);
     }
 }
 
@@ -178,7 +200,7 @@ export async function buyHeart(req, res) {
         const totalPrice = amount * HP_PRICE;
 
         if (user.totalGems < totalPrice) {
-            return res.status(400).json({ message: "Not enough gems" });
+            return res.status(400).json({ message: "Berlian anda kurang untuk melakukan pembelian" });
         }
 
         const availableSlot = MAX_HP - user.hearts.current;
@@ -192,5 +214,84 @@ export async function buyHeart(req, res) {
         return res.status(200).json({ message: "HP bought successfully", user });
     } catch (error) {
         return res.status(500).json({ message: "Error buying HP", error });
+    }
+}
+
+async function updateStreak(user) {
+    const now = new Date();
+    const lastActivity = user.streak.lastActivity ? new Date(user.streak.lastActivity) : null;
+
+    if (!lastActivity) {
+        user.streak = {
+            streakCount: 1,
+            highestStreak: 1,
+            lastActivity: now,
+        };
+    } else {
+        const diffInDays = getDayDifference(now, lastActivity);
+
+        if (diffInDays === 1) {
+            user.streak.streakCount += 1;
+            user.streak.lastActivity = now;
+        } else if (diffInDays > 1) {
+            user.streak.streakCount = 1;
+            user.streak.lastActivity = now;
+        }
+
+        if (user.streak.streakCount > user.streak.highestStreak) {
+            user.streak.highestStreak = user.streak.streakCount;
+        }
+    }
+
+    console.log("Streak updated:", user.streak);
+
+    await user.save();
+}
+
+export async function completeModule(req, res) {
+    try {
+        const { userId, moduleId, correctCount, score, totalAnswers } = req.body;
+
+        if (!userId || !moduleId) {
+            return res.status(400).json({ message: "User ID and Module ID are required" });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const module = await Module.findById(moduleId);
+        if (!module) {
+            return res.status(404).json({ message: "Module not found" });
+        }
+
+        const alreadyCompleted = user.completedModules.some((m) =>
+            m.module.toString() === moduleId.toString()
+        );
+
+        if (alreadyCompleted) {
+            // Update the completed module with the new completion date
+        }
+
+        user.completedModules.push({
+            module: moduleId,
+            correctCount,
+            score,
+            totalAnswers,
+            completedAt: new Date(),
+        });
+
+        console.log("Completed Modules:", user.completedModules);
+
+        await user.save();
+        console.log("User after completing module:");
+        await updateStreak(user);
+        console.log("User after updating streak:");
+        await addUserExpWithoutReqRes(userId, correctCount * 5);
+        console.log("User after adding exp:");
+        res.status(200).json({ message: "Module completed successfully", user });
+    } catch (error) {
+        res.status(500).json({ message: "Error completing module", error });
     }
 }
