@@ -9,7 +9,7 @@ export async function getModules(req, res) {
             return res.status(400).json({ message: 'Please provide an array of levelIds.' });
         }
 
-        const modules = await Module.find({ level: { $in: levelIds } }).populate('level', 'name actualBipaLevel').lean();
+        const modules = await Module.find({ level: { $in: levelIds } }).populate('level').lean();
 
         res.status(200).json({
             message: 'Modules fetched successfully',
