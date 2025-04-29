@@ -134,3 +134,30 @@ export async function getWeeklyLeaderboard(req, res) {
         res.status(500).json({ message: "Error fetching weekly leaderboard", error });
     }
 }
+
+export async function loseHeart(req, res) {
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.hearts.current > 0) {
+            user.hearts.current -= 1;
+            user.hearts.lostAt.push(new Date());
+            await user.save();
+            return res.status(200).json({ message: "HP lost successfully", user });
+        } else {
+            return res.status(400).json({ message: "No HP left to lose" });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: "Error losing HP", error });
+    }
+}
+
