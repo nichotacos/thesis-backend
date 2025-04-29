@@ -105,7 +105,19 @@ const UserSchema = new mongoose.Schema({
                 default: Date.now(),
             },
         }
-    ]
+    ],
+    isAbleToClaimDailyReward: {
+        type: Boolean,
+        default: false,
+    },
+    lastDailyRewardClaim: {
+        type: Date,
+        default: null,
+    },
+    hasClaimedDailyReward: {
+        type: Boolean,
+        default: false,
+    },
 }, { timestamps: true });
 
 const User = mongoose.model("User", UserSchema);
