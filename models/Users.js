@@ -32,13 +32,19 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    totalStreak: {
-        type: Number,
-        default: 0,
-    },
-    highestStreak: {
-        type: Number,
-        default: 0,
+    streak: {
+        streakCount: {
+            type: Number,
+            default: 0,
+        },
+        highestStreak: {
+            type: Number,
+            default: 0,
+        },
+        lastActivity: {
+            type: Date,
+            default: null,
+        }
     },
     totalGems: {
         type: Number,
@@ -75,7 +81,31 @@ const UserSchema = new mongoose.Schema({
             type: [Date],
             default: [],
         }
-    }
+    },
+    completedModules: [
+        {
+            module: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Module",
+            },
+            correctCount: {
+                type: Number,
+                default: 0,
+            },
+            totalAnswers: {
+                type: Number,
+                default: 0,
+            },
+            score: {
+                type: Number,
+                default: 0,
+            },
+            completedAt: {
+                type: Date,
+                default: Date.now(),
+            },
+        }
+    ]
 }, { timestamps: true });
 
 const User = mongoose.model("User", UserSchema);
