@@ -1,5 +1,5 @@
 import express from 'express';
-import { addUserExp, fetchUsers, getWeeklyLeaderboard, storeUser, loseHeart, buyHeart, completeModule } from "../controllers/UserController.js"
+import { addUserExp, fetchUsers, getWeeklyLeaderboard, storeUser, loseHeart, buyHeart, completeModule, addGems, claimDailyReward } from "../controllers/UserController.js"
 
 const router = express.Router();
 
@@ -10,5 +10,7 @@ router.get('/weekly-leaderboard', getWeeklyLeaderboard);
 router.post('/user/lose-heart', loseHeart);
 router.post('/user/buy-heart', buyHeart);
 router.post('/module/complete', completeModule);
+router.post('/user/add-gems', addGems);
+router.post('/user/claim-daily-reward', claimDailyReward);
 
 export default router;  
