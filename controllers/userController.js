@@ -161,3 +161,36 @@ export async function loseHeart(req, res) {
     }
 }
 
+export async function buyHeart(req, res) {
+    const { userId, amount } = req.body;
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const MAX_HP = 5;
+        const HP_PRICE = 50;
+        const totalPrice = amount * HP_PRICE;
+
+        if (user.totalGems < totalPrice) {
+            return res.status(400).json({ message: "Not enough gems" });
+        }
+
+        const availableSlot = MAX_HP - user.hearts.current;
+        const actualToAdd = Math.min(availableSlot, amount);
+
+        user.hearts.lostAt.splice(0, actualToAdd);
+        user.hearts.current += actualToAdd;
+        user.totalGems -= totalPrice;
+
+        await user.save();
+        return res.status(200).json({ message: "HP bought successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: "Error buying HP", error });
+    }
+}
