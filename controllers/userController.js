@@ -228,7 +228,7 @@ async function updateStreak(user) {
             lastActivity: now,
         };
     } else {
-        const diffInDays = getDayDifference(now, lastActivity);
+        const diffInDays = getDayDifference(lastActivity, now);
 
         if (diffInDays === 1) {
             user.streak.streakCount += 1;
@@ -266,21 +266,25 @@ export async function completeModule(req, res) {
             return res.status(404).json({ message: "Module not found" });
         }
 
-        const alreadyCompleted = user.completedModules.some((m) =>
-            m.module.toString() === moduleId.toString()
-        );
+        const alreadyCompleted = user.completedModules.find((m) => m.module.toString() === moduleId);
 
         if (alreadyCompleted) {
-            // Update the completed module with the new completion date
-        }
+            if (score > alreadyCompleted.score) {
+                alreadyCompleted.score = score;
+                alreadyCompleted.correctCount = correctCount;
+            }
 
-        user.completedModules.push({
-            module: moduleId,
-            correctCount,
-            score,
-            totalAnswers,
-            completedAt: new Date(),
-        });
+            alreadyCompleted.totalAnswers = totalAnswers;
+            alreadyCompleted.completedAt = new Date();
+        } else {
+            user.completedModules.push({
+                module: moduleId,
+                correctCount,
+                score,
+                totalAnswers,
+                completedAt: new Date(),
+            });
+        }
 
         console.log("Completed Modules:", user.completedModules);
 
