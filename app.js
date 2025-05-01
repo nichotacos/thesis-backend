@@ -8,6 +8,8 @@ import authRoutes from "./routes/authRoute.js";
 import levelRoutes from "./routes/levelRoute.js";
 import moduleRoutes from "./routes/moduleRoute.js";
 import questionRoutes from "./routes/questionRoute.js";
+import achievementRoutes from "./routes/achievementsRoute.js";
+
 import startCrons from "./crons/index.js";
 
 configDotenv({
@@ -38,3 +40,4 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/", levelRoutes);
 app.use("/api/v1/", moduleRoutes);
 app.use("/api/v1", questionRoutes);
+app.use("/api/v1", achievementRoutes);
