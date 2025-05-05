@@ -290,6 +290,29 @@ export async function completeModule(req, res) {
 
         user.isAbleToClaimDailyReward = true;
 
+        const nextModule = await Module.findOne({
+            level: user.currentLearnLevel,
+            index: module.index + 1
+        });
+
+        if (nextModule) {
+            user.currentModule = nextModule;
+        } else {
+            const allLevels = await Level.find({}).sort({ index: 1 });
+            const levelCount = allLevels.length;
+            const userCurrentLevelIndex = allLevels.findIndex(level => level._id.toString() === user.currentLearnLevel.toString());
+
+            if (allLevels[levelCount - 1]._id === user.currentLearnLevel.toString()) {
+                return res.status(404).json({ message: "No more levels available" });
+            }
+
+            user.currentLearnLevel = allLevels[userCurrentLevelIndex + 1]._id;
+            user.currentModule = await Module.findOne({
+                level: allLevels[userCurrentLevelIndex + 1]._id,
+                index: 1
+            });
+        }
+
         await user.save();
         await updateStreak(user);
         await addUserExpWithoutReqRes(userId, correctCount * 5);
