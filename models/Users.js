@@ -118,6 +118,16 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    achievements: [{
+        achievement: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Achievement",
+        },
+        unlockedAt: {
+            type: Date,
+            default: Date.now(),
+        }
+    }]
 }, { timestamps: true });
 
 const User = mongoose.model("User", UserSchema);
