@@ -1,4 +1,5 @@
 import { Achievement } from "../models/Achievement.js";
+import User from "../models/Users.js";
 
 export const createAchievement = async (req, res) => {
     try {
@@ -49,5 +50,47 @@ export const getAchievements = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: "Error fetching achievements", error });
+    }
+}
+
+export const grantAchievement = async (req, res) => {
+    try {
+        const { userId, achievementCode } = req.body;
+
+        if (!userId || !achievementCode) {
+            return res.status(400).json({ message: "User ID and achievement code are required" });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const alreadyGranted = user.achievements.some(a => a.code === achievementCode);
+        if (alreadyGranted) {
+            return res.status(400).json({ message: "Achievement already granted to user" });
+        }
+
+        const achievement = await Achievement.findOne({ code: achievementCode });
+
+        if (!achievement) {
+            return res.status(404).json({ message: "Achievement not found" });
+        }
+
+        user.achievements.push({
+            achievement: achievement._id,
+        });
+
+        user.totalGems += achievement.reward.gems || 0;
+
+        await user.save();
+
+        res.status(200).json({
+            message: `Achievement ${achievement.title} granted to user ${userId}`,
+            data: achievement
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error granting achievement", error });
     }
 }
