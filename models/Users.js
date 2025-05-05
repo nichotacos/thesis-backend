@@ -127,7 +127,11 @@ const UserSchema = new mongoose.Schema({
             type: Date,
             default: Date.now(),
         }
-    }]
+    }],
+    previousLeaderboardRank: {
+        type: Number,
+        default: null,
+    },
 }, { timestamps: true });
 
 const User = mongoose.model("User", UserSchema);
