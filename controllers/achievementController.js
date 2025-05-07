@@ -61,13 +61,14 @@ export const grantAchievement = async (req, res) => {
             return res.status(400).json({ message: "User ID and achievement code are required" });
         }
 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).populate("achievements.achievement").lean();
+        console.log(user);
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const alreadyGranted = user.achievements.some(a => a.code === achievementCode);
+        const alreadyGranted = user.achievements.find(a => a.achievement.code === achievementCode);
         if (alreadyGranted) {
             return res.status(400).json({ message: "Achievement already granted to user" });
         }
