@@ -56,13 +56,13 @@ export const getAchievements = async (req, res) => {
 export const grantAchievement = async (req, res) => {
     try {
         const { userId, achievementCode } = req.body;
+        console.log(userId, achievementCode);
 
         if (!userId || !achievementCode) {
             return res.status(400).json({ message: "User ID and achievement code are required" });
         }
 
-        const user = await User.findById(userId).populate("achievements.achievement").lean();
-        console.log(user);
+        const user = await User.findById(userId).populate("achievements.achievement");
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -87,11 +87,14 @@ export const grantAchievement = async (req, res) => {
 
         await user.save();
 
+        console.log(user.achievements, user.totalGems);
+
         res.status(200).json({
             message: `Achievement ${achievement.title} granted to user ${userId}`,
             data: achievement
         });
     } catch (error) {
+        console.error("Error granting achievement:", error);
         res.status(500).json({ message: "Error granting achievement", error });
     }
 }
