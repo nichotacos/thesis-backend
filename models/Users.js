@@ -130,7 +130,7 @@ const UserSchema = new mongoose.Schema({
     }],
     previousLeaderboardRank: {
         type: Number,
-        default: null,
+        default: 0,
     },
 }, { timestamps: true });
 
