@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.get('/achievement', getAchievements);
 router.post('/achievement', createAchievement);
-router.post('/achievement/grant', grantAchievement);
+router.post('/achievement/grant-achievement', grantAchievement);
 
 export default router;
