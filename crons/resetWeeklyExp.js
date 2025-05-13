@@ -14,7 +14,11 @@ function resetWeeklyExp() {
             };
         });
         weeklyExp.forEach(async (user) => {
-            await User.findByIdAndUpdate(user.userId, { weeklyExp: 0, previousLeaderboardRank: user.rank });
+            await User.findByIdAndUpdate(user.userId, {
+                weeklyExp: 0,
+                previousLeaderboardRank: user.rank,
+                top3Count: user.rank <= 3 ? user.top3Count + 1 : user.top3Count,
+            });
         });
     }, {
         timezone: "Asia/Jakarta"
