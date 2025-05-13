@@ -17,6 +17,10 @@ const moduleSchema = new mongoose.Schema({
         ref: "Level",
         required: true,
     },
+    isUnitReview: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const Module = mongoose.model("Module", moduleSchema);
