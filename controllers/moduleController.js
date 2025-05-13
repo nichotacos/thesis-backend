@@ -32,7 +32,9 @@ export async function createModule(req, res) {
         const invalidModules = modules.filter((m) =>
             !m.name || !m.name.trim() ||
             !m.description || !m.description.trim() ||
-            !m.level || !m.level.trim()
+            !m.level || !m.level.trim() ||
+            m.isUnitReview === undefined ||
+            m.isUnitReview === null
         );
 
         if (invalidModules.length > 0) {
