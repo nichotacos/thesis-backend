@@ -135,6 +135,34 @@ const UserSchema = new mongoose.Schema({
     top3Count: {
         type: Number,
         default: 0,
+    },
+    purchases: [{
+        item: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'ShopItem'
+        },
+        purchasedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    activeBoost: {
+        type: {
+            boostType: {
+                type: String,
+                enum: ['boost'],
+                required: true
+            },
+            startedAt: {
+                type: Date,
+                required: true
+            },
+            expiresAt: {
+                type: Date,
+                required: true
+            }
+        },
+        default: null
     }
 }, { timestamps: true });
 
