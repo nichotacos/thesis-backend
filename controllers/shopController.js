@@ -21,25 +21,27 @@ export async function getShop(req, res) {
 
 export async function createShopItem(req, res) {
     try {
-        const { items } = req.body;
+        const { name, description, price, category } = req.body;
 
-        if (!Array.isArray(items) || items.length === 0) {
-            return res.status(400).json({ message: "Please provide an array of items." });
-        }
-
-        const invalidItems = items.filter(item =>
-            !item.name || !item.description || !item.price || !item.category || !item.image
-        );
-
-        if (invalidItems.length > 0) {
+        if (!name || !description || !price) {
             return res.status(400).json({ message: "Please fill all fields!" });
         }
 
-        const createdItems = await ShopItem.insertMany(items);
+        const imageUrl = req.file.path;
+
+        const newShopItem = new ShopItem({
+            name,
+            description,
+            price,
+            image: imageUrl,
+            category,
+        });
+
+        await ShopItem.insertOne(newShopItem);
 
         res.status(201).json({
-            message: `${createdItems.length} shop item(s) created successfully`,
-            data: createdItems
+            message: "Shop item created successfully",
+            data: newShopItem,
         });
     } catch (error) {
         res.status(500).json({ message: "Error creating shop items", error });
