@@ -13,6 +13,10 @@ const levelSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    level_image: {
+        type: String,
+        required: true,
+    }
 }, { timestamps: true });
 
 const Level = mongoose.model("Level", levelSchema);
