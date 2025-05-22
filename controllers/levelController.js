@@ -26,27 +26,26 @@ export async function getLevels(req, res) {
 
 export async function createLevel(req, res) {
     try {
-        const { levels } = req.body;
+        const { name, actualBipaLevel, description } = req.body;
 
-        if (!levels || levels.length === 0) {
-            return res.status(400).json({ message: 'Please provide an array of levels.' });
+        if (!name || !actualBipaLevel || !description) {
+            return res.status(400).json({ message: "Please fill all fields!" });
         }
 
-        const invalidLevels = levels.filter((l) =>
-            !l.name || !l.name.trim() ||
-            !l.actualBipaLevel || !l.actualBipaLevel.trim() ||
-            !l.description || !l.description.trim()
-        );
+        const imageUrl = req.file.path;
 
-        if (invalidLevels.length > 0) {
-            return res.status(400).json({ message: 'Please fill all fields!' });
-        }
+        const newLevel = new Level({
+            name,
+            actualBipaLevel,
+            description,
+            level_image: imageUrl,
+        })
 
-        const createdLevels = await Level.insertMany(levels);
+        await newLevel.save();
 
         res.status(201).json({
-            message: 'Levels created successfully',
-            data: createdLevels
+            message: 'Level created successfully',
+            data: newLevel,
         });
     } catch (error) {
         res.status(500).json({ message: "Error creating level", error });
