@@ -29,7 +29,8 @@ export async function login(req, res) {
             });
         }
 
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username }).populate('currentLearnLevel').populate({ path: 'currentModule', populate: { path: 'level', model: 'Level' } }).populate('achievements.achievement').populate({ path: 'completedModules.module', populate: { path: 'level', model: 'Level' } });
+
         if (!user) {
             return res.status(404).json({
                 message: 'Pengguna tidak ditemukan!',
