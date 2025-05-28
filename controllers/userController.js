@@ -4,6 +4,7 @@ import { verifyCaptcha } from "../utils/verifyCaptcha.js";
 import Level from "../models/Level.js";
 import Module from "../models/Module.js";
 import getDayDifference from "../utils/getDayDifference.js";
+import ShopItem from "../models/ShopItem.js";
 
 export async function fetchUsers(req, res) {
     try {
@@ -25,24 +26,28 @@ export async function fetchUsers(req, res) {
 export async function storeUser(req, res) {
     try {
         console.log("Request body:", req.body);
-        const { username, userFullName, email, password, captchaToken } = req.body;
+        const { username, userFullName, email, password, passwordConfirmation, captchaToken } = req.body;
 
-        if (!username || !userFullName || !email) {
-            return res.status(400).json({ message: "All fields are required" });
+        if (!username || !userFullName || !email || !password || !passwordConfirmation) {
+            return res.status(400).json({ message: "Seluruh kolom wajib diisi" });
         }
 
         const existingUsername = await User.findOne({ username });
         if (existingUsername) {
-            return res.status(400).json({ message: "Username already exists" });
+            return res.status(400).json({ message: "Username telah digunakan" });
         }
 
         const existingEmail = await User.findOne({ email });
         if (existingEmail) {
-            return res.status(400).json({ message: "Email already exists" });
+            return res.status(400).json({ message: "Email telah digunakan" });
         }
 
         if (password.length < 6) {
-            return res.status(400).json({ message: "Password must be at least 6 characters long" });
+            return res.status(400).json({ message: "Kata sandi harus lebih dari 6 karakter" });
+        }
+
+        if (password !== passwordConfirmation) {
+            return res.status(400).json({ message: "Kata sandi tidak sesuai" });
         }
 
         // const isHuman = await verifyCaptcha(captchaToken);
@@ -72,6 +77,37 @@ export async function storeUser(req, res) {
     } catch (error) {
         res.status(500).json({ message: "Error storing user", error });
     }
+}
+
+export async function updateUser(req, res) {
+    const { userId, username, userFullName, email, profilePicture } = req.body;
+
+    if (!userId || !username || !userFullName || !email) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+
+    try {
+        const updatedUser = User.findByIdAndUpdate(
+            userId,
+            {
+                username,
+                userFullName,
+                email,
+                profilePicture: profilePicture || "https://ui-avatars.com/api/?name=" + userFullName.split(" ")[0] + "&background=A60000&color=fff",
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json({ message: "User updated successfully", updatedUser });
+    } catch (error) {
+        return res.status(500).json({ message: "Error updating user", error });
+    }
+
+
 }
 
 export async function addUserExp(req, res) {
@@ -385,5 +421,91 @@ export async function claimDailyReward(req, res) {
         });
     } catch (error) {
         return res.status(500).json({ message: "Error claiming daily reward", error });
+    }
+}
+
+export async function buyShopItem(req, res) {
+    const { userId, itemId } = req.body;
+
+    if (!userId || !itemId) {
+        return res.status(400).json({ message: "User ID and Item ID are required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const item = await ShopItem.findById(itemId);
+        if (!item) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        const alreadyPurchased = user.purchases.find((purchase) => purchase.item.toString() === itemId);
+
+        if (alreadyPurchased) {
+            return res.status(400).json({ message: "Item already purchased" });
+        }
+
+        if (user.totalGems < item.price) {
+            return res.status(400).json({ message: "Not enough gems to buy this item" });
+        }
+
+        user.totalGems -= item.price;
+        user.purchases.push({
+            item: item._id,
+            purchasedAt: new Date(),
+        });
+
+        await user.save();
+
+        return res.status(200).json({ message: "Item bought successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: "Error buying item", error });
+    }
+}
+
+export async function equipShopItem(req, res) {
+    const { userId, itemId } = req.body;
+
+    if (!userId || !itemId) {
+        return res.status(400).json({ message: "User ID and Item ID are required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const item = await ShopItem.findById(itemId);
+
+        if (!item) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        console.log("Equipping item:", itemId, "for user:", userId);
+
+        const alreadyEquipped = user.profilePicture === item.image;
+
+        if (alreadyEquipped) {
+            return res.status(400).json({ message: "Item already equipped" });
+        }
+
+        const alreadyPurchased = user.purchases.find((purchase) => purchase.item.toString() === itemId);
+
+        if (!alreadyPurchased) {
+            return res.status(400).json({ message: "Item not purchased" });
+        }
+
+        user.profilePicture = item.image;
+
+        await user.save();
+
+        return res.status(200).json({ message: "Item equipped successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: "Error equipping item", error });
     }
 }
