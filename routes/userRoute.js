@@ -14,6 +14,7 @@ import {
     updateUser
 } from "../controllers/UserController.js"
 import authMiddleware from '../middlewares/authMiddleware.js';
+import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ router.use(authMiddleware);
 
 router.get('/user', fetchUsers);
 router.post('/user', storeUser);
-router.put('/user/update', updateUser);
+router.put('/user/update', upload.single("profilePicture"), updateUser);
 router.post('/user/exp', addUserExp);
 router.get('/weekly-leaderboard', getWeeklyLeaderboard);
 router.post('/user/lose-heart', loseHeart);
