@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import Level from "./Level.js";
 
 const UserSchema = new mongoose.Schema({
     username: {
@@ -121,11 +120,16 @@ const UserSchema = new mongoose.Schema({
     achievements: [{
         achievement: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Achievement",
+            ref: 'Achievement',
+            required: true,
+        },
+        progress: {
+            type: Number,
+            default: 0
         },
         unlockedAt: {
             type: Date,
-            default: Date.now(),
+            default: null
         }
     }],
     previousLeaderboardRank: {
