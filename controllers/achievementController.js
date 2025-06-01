@@ -3,33 +3,37 @@ import User from "../models/Users.js";
 
 export const createAchievement = async (req, res) => {
     try {
-        const payload = Array.isArray(req.body) ? req.body : [req.body];
+        const { code, title, description, category, rarity, reward, progress, maxProgress } = req.body;
 
-        const missingFields = payload.some(({ code, title, description, reward }) =>
-            !code || !title || !description || !reward
-        );
-
-        if (missingFields) {
-            return res.status(400).json({ message: "Each achievement must include code, title, description, and reward" });
+        if (!code || !title || !description || !category || !rarity || !reward, !progress, !maxProgress) {
+            return res.status(400).json({ message: "Please fill all fields!" });
         }
 
-        const achievements = payload.map(data => ({
-            code: data.code,
-            title: data.title,
-            description: data.description,
-            reward: {
-                gems: data.reward.gems || 0,
-                exp: data.reward.exp || 0,
-                hp: data.reward.hp || 0
-            }
-        }));
+        const badge = req.file.path;
 
-        const createdAchievements = await Achievement.insertMany(achievements);
+        if (!badge) {
+            return res.status(400).json({ message: "Badge image is required" });
+        }
+
+        const achievementData = {
+            code,
+            title,
+            description,
+            category,
+            rarity,
+            badge,
+            reward,
+            progress,
+            maxProgress
+        }
+
+        const createdAchievement = await Achievement.create(achievementData);
 
         res.status(201).json({
-            message: `${createdAchievements.length} achievement(s) created successfully`,
-            data: createdAchievements
+            message: 'Achievement created successfully',
+            data: createdAchievement,
         });
+
     } catch (error) {
         res.status(500).json({ message: "Error creating achievements", error });
     }
@@ -68,22 +72,38 @@ export const grantAchievement = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const alreadyGranted = user.achievements.find(a => a.achievement.code === achievementCode);
-        if (alreadyGranted) {
-            return res.status(400).json({ message: "Achievement already granted to user" });
-        }
-
         const achievement = await Achievement.findOne({ code: achievementCode });
 
         if (!achievement) {
             return res.status(404).json({ message: "Achievement not found" });
         }
 
-        user.achievements.push({
-            achievement: achievement._id,
-        });
+        const grantedAchievement = user.achievements.find(a => a.achievement.code === achievementCode);
 
-        user.totalGems += achievement.reward.gems || 0;
+        if (grantedAchievement) {
+            if (grantedAchievement.unlockedAt) return;
+
+            grantedAchievement.progress += 1;
+
+            if (grantedAchievement.progress >= achievement.maxProgress) {
+                grantedAchievement.progress = achievement.maxProgress;
+                grantedAchievement.unlockedAt = new Date();
+
+                user.totalGems += achievement.reward.gems || 0;
+            }
+        } else {
+            const newAchievement = {
+                achievement: achievement._id,
+                progress: 1,
+                unlockedAt: 1 >= achievement.maxProgress ? new Date() : null
+            }
+
+            if (newAchievement.unlockedAt) {
+                user.totalGems += achievement.reward.gems || 0;
+            }
+
+            user.achievements.push(newAchievement);
+        }
 
         await user.save();
 
