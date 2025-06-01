@@ -14,10 +14,28 @@ const achievementSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    category: {
+        type: String,
+        required: true,
+        enum: ["pembelajaran", "penguasaan", "pencapaian"],
+    },
+    rarity: {
+        type: String,
+        required: true,
+        enum: ["umum", "langka", "epik", "legendaris"],
+    },
+    maxProgress: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
+    badge: {
+        type: String,
+        required: true,
+    },
     reward: {
-        type: {
-            gems: Number,
-        }
+        type: Number,
+        required: true,
     },
 }, { timestamps: true });
 
