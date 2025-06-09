@@ -88,6 +88,6 @@ export async function createQuestions(req, res) {
             data: createdQuestions
         });
     } catch (error) {
-        res.status(500).json({ message: '' });
+        res.status(500).json({ message: error.message || "Error creating questions", error: error.message });
     }
 }
