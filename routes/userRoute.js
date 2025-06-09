@@ -18,7 +18,7 @@ import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 
-// router.use(authMiddleware);
+router.use(authMiddleware);
 
 router.get('/user', fetchUsers);
 router.put('/user/update', updateUser);
