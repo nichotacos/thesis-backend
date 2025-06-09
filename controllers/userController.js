@@ -80,22 +80,19 @@ export async function storeUser(req, res) {
 }
 
 export async function updateUser(req, res) {
-    const { userId, username, userFullName, email, profilePicture } = req.body;
+    const { userId, username, userFullName, email } = req.body;
+
+    console.log("Updating user with ID:", userId, "Username:", username, "Full Name:", userFullName, "Email:", email);
 
     if (!userId || !username || !userFullName || !email) {
         return res.status(400).json({ message: "All fields are required" });
     }
 
     try {
-        const updatedUser = User.findByIdAndUpdate(
+        const updatedUser = await User.findByIdAndUpdate(
             userId,
-            {
-                username,
-                userFullName,
-                email,
-                profilePicture: profilePicture || "https://ui-avatars.com/api/?name=" + userFullName.split(" ")[0] + "&background=A60000&color=fff",
-            },
-            { new: true }
+            { username, userFullName, email },
+            { updatedAt: new Date() },
         );
 
         if (!updatedUser) {
@@ -106,8 +103,36 @@ export async function updateUser(req, res) {
     } catch (error) {
         return res.status(500).json({ message: "Error updating user", error });
     }
+}
 
+export async function updateUserProfilePicture(req, res) {
+    const { userId } = req.body;
 
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+
+    try {
+        const imageUrl = req.file ? req.file.path : null;
+        if (!imageUrl) {
+            return res.status(400).json({ message: "Image file is required" });
+        }
+
+        console.log("Updating profile picture for user:", userId, "with image URL:", imageUrl);
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { profilePicture: imageUrl },
+            { new: true, updatedAt: new Date() }
+        );
+
+        return res.status(200).json({
+            message: "Berhasil mengupdate foto profil",
+            user: updatedUser,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Error updating profile picture", error });
+    }
 }
 
 export async function addUserExp(req, res) {
@@ -320,34 +345,33 @@ export async function completeModule(req, res) {
                 totalAnswers,
                 completedAt: new Date(),
             });
-        }
 
-        console.log("Completed Modules:", user.completedModules);
+            const nextModule = await Module.findOne({
+                level: user.currentLearnLevel,
+                index: module.index + 1
+            });
 
-        user.isAbleToClaimDailyReward = true;
+            if (nextModule) {
+                user.currentModule = nextModule;
+            } else {
+                const allLevels = await Level.find({}).sort({ index: 1 });
+                const levelCount = allLevels.length;
+                const userCurrentLevelIndex = allLevels.findIndex(level => level._id.toString() === user.currentLearnLevel.toString());
 
-        const nextModule = await Module.findOne({
-            level: user.currentLearnLevel,
-            index: module.index + 1
-        });
+                if (allLevels[levelCount - 1]._id === user.currentLearnLevel.toString()) {
+                    return res.status(404).json({ message: "No more levels available" });
+                }
 
-        if (nextModule) {
-            user.currentModule = nextModule;
-        } else {
-            const allLevels = await Level.find({}).sort({ index: 1 });
-            const levelCount = allLevels.length;
-            const userCurrentLevelIndex = allLevels.findIndex(level => level._id.toString() === user.currentLearnLevel.toString());
-
-            if (allLevels[levelCount - 1]._id === user.currentLearnLevel.toString()) {
-                return res.status(404).json({ message: "No more levels available" });
+                user.currentLearnLevel = allLevels[userCurrentLevelIndex + 1]._id;
+                user.currentModule = await Module.findOne({
+                    level: allLevels[userCurrentLevelIndex + 1]._id,
+                    index: 1
+                });
             }
 
-            user.currentLearnLevel = allLevels[userCurrentLevelIndex + 1]._id;
-            user.currentModule = await Module.findOne({
-                level: allLevels[userCurrentLevelIndex + 1]._id,
-                index: 1
-            });
         }
+
+        user.isAbleToClaimDailyReward = true;
 
         await user.save();
         await updateStreak(user);
