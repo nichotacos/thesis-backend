@@ -26,7 +26,7 @@ export async function fetchUsers(req, res) {
 export async function storeUser(req, res) {
     try {
         console.log("Request body:", req.body);
-        const { username, userFullName, email, password, passwordConfirmation, captchaToken } = req.body;
+        const { username, userFullName, email, password, passwordConfirmation, role, isVerified } = req.body;
 
         if (!username || !userFullName || !email || !password || !passwordConfirmation) {
             return res.status(400).json({ message: "Seluruh kolom wajib diisi" });
@@ -50,30 +50,31 @@ export async function storeUser(req, res) {
             return res.status(400).json({ message: "Kata sandi tidak sesuai" });
         }
 
-        // const isHuman = await verifyCaptcha(captchaToken);
+        if (isVerified) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const firstLevel = await Level.findOne({ name: "Bali" });
+            const firstModule = await Module.findOne({ level: firstLevel._id, index: 1 });
+            const userFirstName = userFullName.split(" ")[0];
+            const profilePicture = `https://ui-avatars.com/api/?name=${userFirstName}&background=A60000&color=fff`;
 
-        // if (!isHuman) {
-        //     return res.status(400).json({ message: "Verifikasi Captcha gagal!" });
-        // }
+            const newUser = new User({
+                username,
+                userFullName,
+                email,
+                hashedPassword,
+                currentLearnLevel: firstLevel._id,
+                currentModule: firstModule._id,
+                profilePicture,
+                role: role || "Student",
+            });
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const firstLevel = await Level.findOne({ name: "Bali" });
-        const firstModule = await Module.findOne({ level: firstLevel._id, index: 1 });
-        const userFirstName = userFullName.split(" ")[0];
-        const profilePicture = `https://ui-avatars.com/api/?name=${userFirstName}&background=A60000&color=fff`;
-
-        const newUser = new User({
-            username,
-            userFullName,
-            email,
-            hashedPassword,
-            currentLearnLevel: firstLevel._id,
-            currentModule: firstModule._id,
-            profilePicture,
-        });
-
-        await newUser.save();
-        res.status(201).json({ message: "User created successfully", user: newUser });
+            await newUser.save();
+            res.status(201).json({ message: "User created successfully", user: newUser });
+        } else {
+            res.status(200).json({
+                message: "waiting for verification",
+            });
+        }
     } catch (error) {
         res.status(500).json({ message: "Error storing user", error });
     }
@@ -372,10 +373,11 @@ export async function completeModule(req, res) {
         }
 
         user.isAbleToClaimDailyReward = true;
+        const doubleExpBoost = user.activeBoost.boostType === "boost" && user.activeBoost.expiresAt > new Date() ? 10 : 5
 
         await user.save();
         await updateStreak(user);
-        await addUserExpWithoutReqRes(userId, correctCount * 5);
+        await addUserExpWithoutReqRes(userId, correctCount * doubleExpBoost);
 
         res.status(200).json({ message: "Module completed successfully", user });
     } catch (error) {
@@ -531,5 +533,79 @@ export async function equipShopItem(req, res) {
         return res.status(200).json({ message: "Item equipped successfully", user });
     } catch (error) {
         return res.status(500).json({ message: "Error equipping item", error });
+    }
+}
+
+export async function buyBoostItem(req, res) {
+    const { userId, itemId } = req.body;
+
+    if (!userId || !itemId) {
+        return res.status(400).json({ message: "User ID and Item ID are required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const item = await ShopItem.findById(itemId);
+        if (!item) {
+            return res.status(404).json({ message: "Item not found" });
+        }
+
+        if (user.totalGems < item.price) {
+            return res.status(400).json({ message: "Not enough gems to buy this item" });
+        }
+
+        console.log("Buying boost item:", itemId, "for user:", userId);
+        console.log("user gems:", user.totalGems, "item price:", item.price);
+        console.log("boost type", user.activeBoost.boostType, "item category:", item.category);
+
+        user.totalGems -= item.price;
+        console.log("user gems after purchase:", user.totalGems);
+        console.log("new active boost:", { boostType: item.category.toLowerCase(), startedAt: new Date(), expiresAt: new Date(Date.now() + 900000) });
+
+        user.activeBoost = {
+            boostType: item.category.toLowerCase(),
+            startedAt: new Date(),
+            expiresAt: new Date(Date.now() + 900000), // 15 minutes from now
+        };
+
+
+        await user.save();
+
+        return res.status(200).json({ message: "Boost item bought successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: "Error buying boost item", error });
+    }
+}
+
+export async function deleteBoost(req, res) {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!user.activeBoost) {
+            return res.status(400).json({ message: "No active boost to delete" });
+        }
+
+        user.activeBoost.boostType = null;
+        user.activeBoost.startedAt = null;
+        user.activeBoost.expiresAt = null;
+
+        await user.save();
+
+        return res.status(200).json({ message: "Boost deleted successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: "Error deleting boost", error });
     }
 }
