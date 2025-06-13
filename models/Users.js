@@ -19,6 +19,11 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    role: {
+        type: String,
+        enum: ['Admin', 'Student', 'Visitor'],
+        required: true,
+    },
     totalExp: {
         type: Number,
         default: 0,
@@ -151,22 +156,19 @@ const UserSchema = new mongoose.Schema({
         }
     }],
     activeBoost: {
-        type: {
-            boostType: {
-                type: String,
-                enum: ['boost'],
-                required: true
-            },
-            startedAt: {
-                type: Date,
-                required: true
-            },
-            expiresAt: {
-                type: Date,
-                required: true
-            }
+        boostType: {
+            type: String,
+            enum: ['boost'],
+            default: null
         },
-        default: null
+        startedAt: {
+            type: Date,
+            default: null
+        },
+        expiresAt: {
+            type: Date,
+            default: null
+        }
     }
 }, { timestamps: true });
 
