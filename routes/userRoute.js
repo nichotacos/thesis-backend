@@ -11,7 +11,9 @@ import {
     buyShopItem,
     equipShopItem,
     updateUser,
-    updateUserProfilePicture
+    updateUserProfilePicture,
+    buyBoostItem,
+    deleteBoost
 } from "../controllers/UserController.js"
 import authMiddleware from '../middlewares/authMiddleware.js';
 import upload from '../middlewares/uploadMiddleware.js';
@@ -32,5 +34,7 @@ router.post('/user/add-gems', addGems);
 router.post('/user/claim-daily-reward', claimDailyReward);
 router.post('/user/buy-shop-item', buyShopItem);
 router.post('/user/equip-item', equipShopItem);
+router.post('/user/buy-boost', buyBoostItem);
+router.post('/user/delete-boost', deleteBoost);
 
 export default router;  
